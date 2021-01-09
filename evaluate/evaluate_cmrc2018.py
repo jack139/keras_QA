@@ -97,7 +97,7 @@ def evaluate(ground_truth_file, prediction_file):
 					skip_count += 1
 					continue
 
-				prediction 	= str(prediction_file[query_id])#.decode('utf-8')
+				prediction 	= str(prediction_file[query_id])
 				f1 += calc_f1_score(answers, prediction)
 				em += calc_em_score(answers, prediction)
 

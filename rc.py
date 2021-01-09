@@ -33,26 +33,28 @@ train_data_file = '../nlp_model/cmrc2018/cmrc2018_train_dev.json'
 eva_data_file = '../nlp_model/cmrc2018/cmrc2018_trial.json'
 eva_script = 'evaluate/evaluate_cmrc2018.py'
 
+'''
+bert4keras 支持的 BERT model_type
+    'bert': BERT,
+    'albert': ALBERT,
+    'albert_unshared': ALBERT_Unshared,
+    'roberta': BERT,
+'''
+
 # bert配置
+#model_type = 'bert'
 #config_path = '/root/kg/bert/chinese_roberta_wwm_ext_L-12_H-768_A-12/bert_config.json'
 #checkpoint_path = '/root/kg/bert/chinese_roberta_wwm_ext_L-12_H-768_A-12/bert_model.ckpt'
 #dict_path = '/root/kg/bert/chinese_roberta_wwm_ext_L-12_H-768_A-12/vocab.txt'
 
+# albert配置
+model_type = 'albert'
 config_path = '../nlp_model/albert_zh_base/albert_config.json'
 checkpoint_path = '../nlp_model/albert_zh_base/model.ckpt-best'
 dict_path = '../nlp_model/albert_zh_base/vocab_chinese.txt'
 
 
-#def load_data(filename):
-#    D = []
-#    for d in json.load(open(filename))['data'][0]['paragraphs']:
-#        for qa in d['qas']:
-#            D.append([
-#                qa['id'], d['context'], qa['question'],
-#                [a['text'] for a in qa.get('answers', [])]
-#            ])
-#    return D
-
+# 兼容两个数据集的载入
 def load_data(filename):
     D = []
     for d in json.load(open(filename))['data']:
@@ -126,7 +128,7 @@ class MaskedSoftmax(Layer):
 model = build_transformer_model(
     config_path=config_path,
     checkpoint_path=checkpoint_path,
-    model='albert'
+    model=model_type
 )
 
 
