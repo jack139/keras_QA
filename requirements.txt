@@ -1,0 +1,4 @@
+tensorflow==1.15.4
+bert4keras
+nltk
+rank_bm25
