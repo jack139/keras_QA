@@ -24,12 +24,12 @@ learing_rate = 2e-5
 
 
 # 百度 阅读理解
-#train_data_file = '../nlp_model/dureader_robust-data/train.json'  
+train_data_file1 = '../nlp_model/dureader_robust-data/train.json'  
 #eva_data_file = '../nlp_model/dureader_robust-data/dev.json'
 #eva_script = 'evaluate/evaluate_dureader.py'
 
 # CMRC2018
-train_data_file = '../nlp_model/cmrc2018/cmrc2018_train_dev.json'
+train_data_file2 = '../nlp_model/cmrc2018/cmrc2018_train_dev.json'
 eva_data_file = '../nlp_model/cmrc2018/cmrc2018_trial.json'
 eva_script = 'evaluate/evaluate_cmrc2018.py'
 
@@ -55,20 +55,21 @@ dict_path = '../nlp_model/albert_zh_base/vocab_chinese.txt'
 
 
 # 兼容两个数据集的载入
-def load_data(filename):
+def load_data(filename_list):
     D = []
-    for d in json.load(open(filename))['data']:
-        for pp in d['paragraphs']:
-            for qa in pp['qas']:
-                D.append([
-                    qa['id'], pp['context'], qa['question'],
-                    [a['text'] for a in qa.get('answers', [])]
-                ])
+    for filename in filename_list:
+        for d in json.load(open(filename))['data']:
+            for pp in d['paragraphs']:
+                for qa in pp['qas']:
+                    D.append([
+                        qa['id'], pp['context'], qa['question'],
+                        [a['text'] for a in qa.get('answers', [])]
+                    ])
     return D
 
 
-# 读取数据
-train_data = load_data(train_data_file)
+# 读取数据, 使用两个数据集一起训练
+train_data = load_data([train_data_file1, train_data_file2])
 
 # 建立分词器
 tokenizer = Tokenizer(dict_path, do_lower_case=True)
@@ -195,7 +196,7 @@ def predict_to_file(infile, out_file):
     """
     fw = open(out_file, 'w', encoding='utf-8')
     R = {}
-    for d in tqdm(load_data(infile)):
+    for d in tqdm(load_data([infile])):
         a = extract_answer(d[2], d[1])
         R[d[0]] = a
     R = json.dumps(R, ensure_ascii=False, indent=4)
@@ -232,6 +233,12 @@ class Evaluator(keras.callbacks.Callback):
 
 
 if __name__ == '__main__':
+
+    print("maxlen: ", maxlen)
+    print("epochs: ", epochs)
+    print("batch_size: ", batch_size)
+    print("learing_rate: ", learing_rate)
+    print("train data: ", len(train_data))
 
     train_generator = data_generator(train_data, batch_size)
     evaluator = Evaluator()
