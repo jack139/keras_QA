@@ -4,8 +4,16 @@
 # BASE模型在第一期测试集上能达到0.69的F1，优于官方baseline
 # 如果你显存足够，可以换用RoBERTa Large模型，F1可以到0.71
 
-import json, os
+import os
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+#os.environ["RECOMPUTE"] = "1"
+
+# AMP要使用 tf.keras 
+#os.environ["TF_KERAS"] = "1"
+
+import json
 import numpy as np
+import tensorflow as tf
 from bert4keras.backend import keras, K
 from bert4keras.models import build_transformer_model
 from bert4keras.tokenizers import Tokenizer
@@ -17,9 +25,9 @@ from keras.models import Model
 from tqdm import tqdm
 
 # 基本信息
-maxlen = 256
+maxlen = 512
 epochs = 20
-batch_size = 32
+batch_size = 8
 learing_rate = 2e-5
 
 
@@ -158,10 +166,13 @@ def sparse_accuracy(y_true, y_pred):
     y_pred = K.cast(K.argmax(y_pred, axis=2), 'int32')
     return K.mean(K.cast(K.equal(y_true, y_pred), K.floatx()))
 
+# 优化器，使用AMP
+opt = Adam(learing_rate)
+#opt = tf.train.experimental.enable_mixed_precision_graph_rewrite(opt)
 
 model.compile(
     loss=sparse_categorical_crossentropy,
-    optimizer=Adam(learing_rate),
+    optimizer=opt,
     metrics=[sparse_accuracy]
 )
 
