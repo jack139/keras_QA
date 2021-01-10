@@ -5,15 +5,19 @@
 # 如果你显存足够，可以换用RoBERTa Large模型，F1可以到0.71
 
 import os
-os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
-#os.environ["RECOMPUTE"] = "1"
+#os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+os.environ["RECOMPUTE"] = "1"
 
 # AMP要使用 tf.keras 
 #os.environ["TF_KERAS"] = "1"
 
+#import memory_saving_gradients as gc
+#from tensorflow.python.ops import gradients as tf_gradients
+#tf_gradients.gradients = gc.gradients_memory
+
 import json
 import numpy as np
-import tensorflow as tf
+#import tensorflow as tf
 from bert4keras.backend import keras, K
 from bert4keras.models import build_transformer_model
 from bert4keras.tokenizers import Tokenizer
@@ -25,10 +29,16 @@ from keras.models import Model
 from tqdm import tqdm
 
 # 基本信息
-maxlen = 512
+maxlen = 256
 epochs = 20
-batch_size = 8
+batch_size = 52 
 learing_rate = 2e-5
+
+'''
+            重计算     无重计算
+bert         52         8
+albert      
+'''
 
 
 # 百度 阅读理解
@@ -50,16 +60,16 @@ bert4keras 支持的 BERT model_type
 '''
 
 # bert配置
-#model_type = 'bert'
-#config_path = '/root/kg/bert/chinese_roberta_wwm_ext_L-12_H-768_A-12/bert_config.json'
-#checkpoint_path = '/root/kg/bert/chinese_roberta_wwm_ext_L-12_H-768_A-12/bert_model.ckpt'
-#dict_path = '/root/kg/bert/chinese_roberta_wwm_ext_L-12_H-768_A-12/vocab.txt'
+model_type = 'bert'
+config_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_config.json'
+checkpoint_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_model.ckpt'
+dict_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/vocab.txt'
 
 # albert配置
-model_type = 'albert'
-config_path = '../nlp_model/albert_zh_base/albert_config.json'
-checkpoint_path = '../nlp_model/albert_zh_base/model.ckpt-best'
-dict_path = '../nlp_model/albert_zh_base/vocab_chinese.txt'
+#model_type = 'albert'
+#config_path = '../nlp_model/albert_zh_base/albert_config.json'
+#checkpoint_path = '../nlp_model/albert_zh_base/model.ckpt-best'
+#dict_path = '../nlp_model/albert_zh_base/vocab_chinese.txt'
 
 
 # 兼容两个数据集的载入
