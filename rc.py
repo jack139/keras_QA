@@ -6,19 +6,26 @@
 
 import os
 #os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
-os.environ["RECOMPUTE"] = "1"
 
 # AMP要使用 tf.keras 
-#os.environ["TF_KERAS"] = "1"
+os.environ["TF_KERAS"] = "1"
 
-#import memory_saving_gradients as gc
-#from tensorflow.python.ops import gradients as tf_gradients
-#tf_gradients.gradients = gc.gradients_memory
+# bert4keras 自带 重计算
+#os.environ["RECOMPUTE"] = "1"
+
+'''
+            无重计算   bert4keras重计算    tf_gradients  
+bert         8           52                 62
+albert       32          n/a                76
+'''
+import memory_saving_gradients as gc
+from tensorflow.python.ops import gradients as tf_gradients
+tf_gradients.gradients = gc.gradients_collection
+
 
 import json
 import numpy as np
-#import tensorflow as tf
-from bert4keras.backend import keras, K
+from bert4keras.backend import keras, K, tf
 from bert4keras.models import build_transformer_model
 from bert4keras.tokenizers import Tokenizer
 from bert4keras.optimizers import Adam
@@ -29,16 +36,10 @@ from keras.models import Model
 from tqdm import tqdm
 
 # 基本信息
-maxlen = 256
+maxlen = 512
 epochs = 20
-batch_size = 52 
+batch_size = 64
 learing_rate = 2e-5
-
-'''
-            重计算     无重计算
-bert         52         8
-albert      
-'''
 
 
 # 百度 阅读理解
@@ -60,16 +61,16 @@ bert4keras 支持的 BERT model_type
 '''
 
 # bert配置
-model_type = 'bert'
-config_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_config.json'
-checkpoint_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_model.ckpt'
-dict_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/vocab.txt'
+#model_type = 'bert'
+#config_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_config.json'
+#checkpoint_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_model.ckpt'
+#dict_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/vocab.txt'
 
 # albert配置
-#model_type = 'albert'
-#config_path = '../nlp_model/albert_zh_base/albert_config.json'
-#checkpoint_path = '../nlp_model/albert_zh_base/model.ckpt-best'
-#dict_path = '../nlp_model/albert_zh_base/vocab_chinese.txt'
+model_type = 'albert'
+config_path = '../nlp_model/albert_zh_base/albert_config.json'
+checkpoint_path = '../nlp_model/albert_zh_base/model.ckpt-best'
+dict_path = '../nlp_model/albert_zh_base/vocab_chinese.txt'
 
 
 # 兼容两个数据集的载入
@@ -130,6 +131,11 @@ class data_generator(DataGenerator):
                     batch_token_ids, batch_segment_ids, batch_labels = [], [], []
 
 
+# 优化器，使用AMP
+opt = Adam(learing_rate)
+opt = tf.train.experimental.enable_mixed_precision_graph_rewrite(opt)
+
+# 建立模型，载入权重
 class MaskedSoftmax(Layer):
     """在序列长度那一维进行softmax，并mask掉padding部分
     """
@@ -176,9 +182,6 @@ def sparse_accuracy(y_true, y_pred):
     y_pred = K.cast(K.argmax(y_pred, axis=2), 'int32')
     return K.mean(K.cast(K.equal(y_true, y_pred), K.floatx()))
 
-# 优化器，使用AMP
-opt = Adam(learing_rate)
-#opt = tf.train.experimental.enable_mixed_precision_graph_rewrite(opt)
 
 model.compile(
     loss=sparse_categorical_crossentropy,
