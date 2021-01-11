@@ -197,7 +197,7 @@ model.compile(
 )
 
 
-def extract_answer(question, context, max_a_len=16):
+def extract_answer(question, context, max_a_len=100):
     """抽取答案函数
     """
     max_q_len = 64
@@ -291,5 +291,11 @@ if __name__ == '__main__':
     )
 
 else:
-    model.load_weights('best_model.weights')
-    # predict_to_file('../nlp_model/dureader_robust-test1/test1.json', 'rc_pred.json')
+    model.load_weights('outputs/albert_batch64_max512_lr2e-05_F1_82.000/best_model.weights')
+    corpus = "深度学习（英语：deep learning）是机器学习的分支，是一种以人工神经网络为架构，对资料进行表征学习\
+的算法。深度学习是机器学习中一种基于对数据进行表征学习的算法。观测值（例如一幅图像）可以使用多种方式来表示，如\
+每个像素强度值的向量，或者更抽象地表示成一系列边、特定形状的区域等。而使用某些特定的表示方法更容易从实例中学习\
+任务（例如，人脸识别或面部表情识别）。深度学习的好处是用非监督式或半监督式的特征学习和分层特征提取高效算法\
+来替代手工获取特征。"
+    ans = extract_answer("什么是深度学习？", corpus)
+    print(ans)
