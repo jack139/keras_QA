@@ -18,7 +18,7 @@ from tensorflow.python.ops import gradients as tf_gradients
 tf_gradients.gradients = gc.gradients_collection
 
 
-import json
+import json, shutil
 import numpy as np
 from bert4keras.backend import keras, K, tf
 from bert4keras.models import build_transformer_model
@@ -32,7 +32,7 @@ from tqdm import tqdm
 
 # 基本信息
 maxlen = 512
-epochs = 20
+epochs = 10
 batch_size = 64
 learing_rate = 2e-5
 model_type = 'albert'
@@ -253,16 +253,23 @@ class Evaluator(keras.callbacks.Callback):
     """
     def __init__(self):
         self.best_val_f1 = 0.
+        self.last_best_path = ''
 
     def on_epoch_end(self, epoch, logs=None):
         metrics = evaluate(eva_data_file)
         if float(metrics['F1']) >= self.best_val_f1:
             self.best_val_f1 = float(metrics['F1'])
-            best_path = '%s_F1_%s'%(output_path,metrics['F1'])
-            os.makedirs(best_path, exist_ok=True)
-            model.save_weights('%s/best_model.weights' % best_path)
+            self.save_weights(metrics['F1'])
         metrics['BEST F1'] = self.best_val_f1
         print(metrics)
+
+    def save_weights(self, f1):
+        if os.path.exists(self.last_best_path):
+            shutil.rmtree(self.last_best_path)
+        best_path = '%s_F1_%s'%(output_path, f1)
+        os.makedirs(best_path, exist_ok=True)
+        model.save_weights('%s/best_model.weights' % best_path)
+        self.last_best_path = best_path
 
 
 if __name__ == '__main__':
