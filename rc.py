@@ -1,11 +1,6 @@
 #! -*- coding: utf-8 -*-
-# 百度LIC2020的机器阅读理解赛道，非官方baseline
-# 直接用RoBERTa+Softmax预测首尾
-# BASE模型在第一期测试集上能达到0.69的F1，优于官方baseline
-# 如果你显存足够，可以换用RoBERTa Large模型，F1可以到0.71
 
 import os
-#os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
 # AMP要使用 tf.keras 
 os.environ["TF_KERAS"] = "1"
@@ -40,16 +35,21 @@ maxlen = 512
 epochs = 20
 batch_size = 64
 learing_rate = 2e-5
-
+model_type = 'albert'
 
 # 百度 阅读理解
+# 直接用RoBERTa+Softmax预测首尾
+# BASE模型在第一期测试集上能达到0.69的F1，优于官方baseline
+# 如果你显存足够，可以换用RoBERTa Large模型，F1可以到0.71
 train_data_file1 = '../nlp_model/dureader_robust-data/train.json'  
 #eva_data_file = '../nlp_model/dureader_robust-data/dev.json'
 #eva_script = 'evaluate/evaluate_dureader.py'
 
 # CMRC2018
-train_data_file2 = '../nlp_model/cmrc2018/cmrc2018_train_dev.json'
-eva_data_file = '../nlp_model/cmrc2018/cmrc2018_trial.json'
+#train_data_file2 = '../nlp_model/cmrc2018/cmrc2018_train_dev.json'
+#eva_data_file = '../nlp_model/cmrc2018/cmrc2018_trial.json'
+train_data_file2 = '../nlp_model/cmrc2018/test_train.json'
+eva_data_file = '../nlp_model/cmrc2018/test_dev.json'
 eva_script = 'evaluate/evaluate_cmrc2018.py'
 
 '''
@@ -59,18 +59,24 @@ bert4keras 支持的 BERT model_type
     'albert_unshared': ALBERT_Unshared,
     'roberta': BERT,
 '''
+if model_type=='bert':
+    # bert配置
+    config_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_config.json'
+    checkpoint_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_model.ckpt'
+    dict_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/vocab.txt'
+elif model_type=='albert':
+    # albert配置
+    config_path = '../nlp_model/albert_zh_base/albert_config.json'
+    checkpoint_path = '../nlp_model/albert_zh_base/model.ckpt-best'
+    dict_path = '../nlp_model/albert_zh_base/vocab_chinese.txt'
+else:
+    print('unknow model type.')
+    sys.exit(1)
 
-# bert配置
-#model_type = 'bert'
-#config_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_config.json'
-#checkpoint_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/bert_model.ckpt'
-#dict_path = '../nlp_model/chinese_bert_L-12_H-768_A-12/vocab.txt'
 
-# albert配置
-model_type = 'albert'
-config_path = '../nlp_model/albert_zh_base/albert_config.json'
-checkpoint_path = '../nlp_model/albert_zh_base/model.ckpt-best'
-dict_path = '../nlp_model/albert_zh_base/vocab_chinese.txt'
+# 输出目录
+output_path = 'outputs/keras_QA'
+output_path = '%s/batch%d_max%d_lr%.0e'%(output_path, batch_size, maxlen, learing_rate)
 
 
 # 兼容两个数据集的载入
@@ -88,7 +94,8 @@ def load_data(filename_list):
 
 
 # 读取数据, 使用两个数据集一起训练
-train_data = load_data([train_data_file1, train_data_file2])
+#train_data = load_data([train_data_file1, train_data_file2])
+train_data = load_data([train_data_file2])
 
 # 建立分词器
 tokenizer = Tokenizer(dict_path, do_lower_case=True)
@@ -251,7 +258,9 @@ class Evaluator(keras.callbacks.Callback):
         metrics = evaluate(eva_data_file)
         if float(metrics['F1']) >= self.best_val_f1:
             self.best_val_f1 = float(metrics['F1'])
-            model.save_weights('best_model.weights')
+            best_path = '%s_F1_%s'%(output_path,metrics['F1'])
+            os.makedirs(best_path, exist_ok=True)
+            model.save_weights('%s/best_model.weights' % best_path)
         metrics['BEST F1'] = self.best_val_f1
         print(metrics)
 
