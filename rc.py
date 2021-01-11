@@ -76,7 +76,7 @@ else:
 
 # 输出目录
 output_path = 'outputs/keras_QA'
-output_path = '%s/batch%d_max%d_lr%.0e'%(output_path, batch_size, maxlen, learing_rate)
+output_path = '%s/%s_batch%d_max%d_lr%.0e'%(output_path, model_type, batch_size, maxlen, learing_rate)
 
 
 # 兼容两个数据集的载入
