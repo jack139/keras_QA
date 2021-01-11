@@ -200,7 +200,7 @@ model.compile(
 def extract_answer(question, context, max_a_len=100):
     """抽取答案函数
     """
-    max_q_len = 64
+    max_q_len = 100
     q_token_ids = tokenizer.encode(question, maxlen=max_q_len)[0]
     c_token_ids = tokenizer.encode(
         context, maxlen=maxlen - len(q_token_ids) + 1
@@ -291,6 +291,8 @@ if __name__ == '__main__':
     )
 
 else:
+    pass
+    '''
     model.load_weights('outputs/albert_batch64_max512_lr2e-05_F1_82.000/best_model.weights')
     corpus = "深度学习（英语：deep learning）是机器学习的分支，是一种以人工神经网络为架构，对资料进行表征学习\
 的算法。深度学习是机器学习中一种基于对数据进行表征学习的算法。观测值（例如一幅图像）可以使用多种方式来表示，如\
@@ -299,3 +301,4 @@ else:
 来替代手工获取特征。"
     ans = extract_answer("什么是深度学习？", corpus)
     print(ans)
+    '''
