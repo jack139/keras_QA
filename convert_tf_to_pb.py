@@ -25,7 +25,7 @@ with tf.Session(config=config) as sess:
     # 输出 pb
     with tf.gfile.FastGFile('model.pb', 'wb') as f:
         graph_def = sess.graph.as_graph_def()
-        output_nodes = [n.name for n in tf.get_default_graph().as_graph_def().node if 'permute' in n.name]
+        output_nodes = ['permute/transpose']
         print('outputs:', output_nodes)
         #print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node])) # 所有层的名字
         output_graph_def = graph_util.convert_variables_to_constants(sess, graph_def, output_nodes)

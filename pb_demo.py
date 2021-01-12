@@ -109,15 +109,15 @@ with tf.Session(graph=p_graph) as sess:
             mapping = tokenizer.rematch(context, c_tokens)
             #probas = model.predict([[token_ids], [segment_ids]])[0]
 
-            #while len(token_ids) < max_seq_length:
-            #    token_ids.append(0)
-            #    segment_ids.append(0)
+            while len(token_ids) < max_seq_length:
+                token_ids.append(0)
+                segment_ids.append(0)
 
             token_len = len(token_ids)
             token_ids = np.array(token_ids).reshape(1, token_len)
             segment_ids = np.array(segment_ids).reshape(1, token_len)
 
-            #print(token_ids, segment_ids)
+            print(token_ids, segment_ids)
 
             start_time = datetime.now()
             probas = sess.run([tensor_start_logits], feed_dict={tensor_input_ids: token_ids,
